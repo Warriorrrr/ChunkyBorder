@@ -1,18 +1,22 @@
-import java.io.ByteArrayOutputStream
-
 plugins {
     id("java-library")
     id("maven-publish")
-    id("io.github.goooler.shadow") version "8.1.7"
+    alias(libs.plugins.shadow)
+    id("chunkyborder.mod-conventions") apply false
 }
+
+val chunkyCommon = libs.chunky.common
+val moddedTarget = libs.versions.modded.get()
+
+val commitsSinceLastTag = commitsSinceLastTag().get()
 
 subprojects {
     plugins.apply("java-library")
     plugins.apply("maven-publish")
-    plugins.apply("io.github.goooler.shadow")
+    plugins.apply("com.gradleup.shadow")
 
     group = "${project.property("group")}"
-    version = "${project.property("version")}.${commitsSinceLastTag()}"
+    version = "${project.property("version")}.${commitsSinceLastTag}"
 
     repositories {
         mavenCentral()
@@ -20,14 +24,20 @@ subprojects {
     }
 
     dependencies {
-        compileOnly(group = "org.apache.logging.log4j", name = "log4j-api", version = "2.14.1")
-        compileOnly(group = "com.google.code.gson", name = "gson", version = "2.8.9")
-        compileOnly(group = "org.popcraft", name = "chunky-common", version = "${project.property("target")}")
+        compileOnly("org.apache.logging.log4j:log4j-api:2.14.1")
+        compileOnly("com.google.code.gson:gson:2.8.9")
+        compileOnly(chunkyCommon)
+    }
+
+    plugins.withId("chunkyborder.mod-conventions") {
+        extensions.configure<ModConventionsExtension> {
+            target = moddedTarget
+        }
     }
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(21))
+            languageVersion.set(JavaLanguageVersion.of(25))
         }
         withSourcesJar()
     }
@@ -35,7 +45,7 @@ subprojects {
     tasks {
         withType<JavaCompile> {
             options.encoding = "UTF-8"
-            options.release = 21
+            options.release = 25
         }
         jar {
             archiveClassifier.set("noshade")
@@ -72,14 +82,11 @@ subprojects {
     }
 }
 
-fun commitsSinceLastTag(): String {
-    val tagDescription = ByteArrayOutputStream()
-    exec {
-        commandLine("git", "describe", "--tags")
-        standardOutput = tagDescription
+fun commitsSinceLastTag(): Provider<String> {
+    return providers.exec { commandLine("git", "describe", "--tags") }.standardOutput.asText.map {
+        if (it.indexOf('-') < 0) {
+            return@map "0"
+        }
+        return@map it.split('-')[1]
     }
-    if (tagDescription.toString().indexOf('-') < 0) {
-        return "0"
-    }
-    return tagDescription.toString().split('-')[1]
 }

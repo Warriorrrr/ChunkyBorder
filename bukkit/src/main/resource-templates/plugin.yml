@@ -1,13 +1,13 @@
 name: ChunkyBorder
-version: ${version}
-main: ${group}.chunkyborder.ChunkyBorderBukkit
+version: {{ version }}
+main: {{ group }}.chunkyborder.ChunkyBorderBukkit
 api-version: "1.13"
 folia-supported: true
 depend: [Chunky]
 softdepend: [dynmap, BlueMap, Pl3xMap, squaremap]
 load: POSTWORLD
-authors: [${author}]
-description: ${description}
+authors: [{{ author }}]
+description: {{ description }}
 website: https://www.spigotmc.org/resources/chunkyborder.84278/
 permissions:
   chunkyborder.bypass.move:

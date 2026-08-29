@@ -1,37 +1,30 @@
+plugins {
+    id("net.kyori.blossom")
+}
+
 repositories {
     mavenCentral()
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://repo.mikeprimm.com")
     maven("https://jitpack.io")
-    exclusiveContent {
-        forRepository { maven("https://api.modrinth.com/maven") }
-        filter { includeGroup("maven.modrinth") }
+    maven("https://api.modrinth.com/maven") {
+        mavenContent { includeGroup("maven.modrinth") }
     }
 }
 
 dependencies {
-    compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.20.5-R0.1-SNAPSHOT")
-    compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "${project.property("target")}")
-    compileOnly(group = "org.popcraft", name = "chunky-folia", version = "${project.property("target")}")
-    compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
-    compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
-    compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "${project.property("target_squaremap")}")
-    compileOnly(group = "maven.modrinth", name = "pl3xmap", version = "${project.property("target_pl3xmap")}")
-    implementation(group = "org.bstats", name = "bstats-bukkit", version = "3.0.2")
+    compileOnly("org.spigotmc:spigot-api:1.20.5-R0.1-SNAPSHOT")
+    compileOnly(libs.chunky.bukkit)
+    compileOnly(libs.chunky.folia)
+    compileOnly(libs.dynmap)
+    compileOnly(libs.bluemap)
+    compileOnly(libs.squaremap)
+    compileOnly(libs.pl3xmap)
+    implementation("org.bstats:bstats-bukkit:3.2.1")
     implementation(project(":chunkyborder-common"))
 }
 
 tasks {
-    processResources {
-        filesMatching("plugin.yml") {
-            expand(
-                "version" to project.version,
-                "group" to project.group,
-                "author" to project.property("author"),
-                "description" to project.property("description")
-            )
-        }
-    }
     shadowJar {
         minimize()
         relocate("org.bstats", "${project.group}.${rootProject.name}.lib.bstats")
@@ -39,5 +32,18 @@ tasks {
             attributes("paperweight-mappings-namespace" to "mojang")
         }
         archiveFileName.set("${project.property("artifactName")}-Bukkit-${project.version}.jar")
+    }
+}
+
+sourceSets.main {
+    blossom {
+        resources {
+            trimNewlines = false
+
+            property("version", project.version.toString())
+            property("group", project.group.toString())
+            property("author", providers.gradleProperty("author"))
+            property("description", providers.gradleProperty("description"))
+        }
     }
 }

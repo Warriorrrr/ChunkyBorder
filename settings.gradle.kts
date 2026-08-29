@@ -5,6 +5,7 @@ pluginManagement {
         maven("https://maven.minecraftforge.net")
         maven("https://maven.architectury.dev/")
     }
+    includeBuild("build-logic")
 }
 
 rootProject.name = "chunkyborder"

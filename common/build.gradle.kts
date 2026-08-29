@@ -1,26 +1,29 @@
+plugins {
+    id("net.kyori.blossom")
+}
+
 repositories {
     maven("https://repo.mikeprimm.com")
     maven("https://jitpack.io")
-    exclusiveContent {
-        forRepository { maven("https://api.modrinth.com/maven") }
-        filter { includeGroup("maven.modrinth") }
+    maven("https://api.modrinth.com/maven") {
+        mavenContent { includeGroup("maven.modrinth") }
     }
 }
 
 dependencies {
-    compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
-    compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
-    compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "${project.property("target_squaremap")}")
-    compileOnly(group = "maven.modrinth", name = "pl3xmap", version = "${project.property("target_pl3xmap")}")
+    compileOnly(libs.dynmap)
+    compileOnly(libs.bluemap)
+    compileOnly(libs.squaremap)
+    compileOnly(libs.pl3xmap)
 }
 
-tasks {
-    processResources {
-        filesMatching("version.properties") {
-            expand(
-                "version" to project.version,
-                "target" to project.property("target")
-            )
+sourceSets.main {
+    blossom {
+        resources {
+            trimNewlines = false
+
+            property("version", project.version.toString())
+            property("target", libs.versions.chunky)
         }
     }
 }

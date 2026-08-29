@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "id": "${id}",
-  "version": "${version}",
-  "name": "${name}",
-  "description": "${description}",
+  "id": "{{ id }}",
+  "version": "{{ version }}",
+  "name": "{{ name }}",
+  "description": "{{ description }}",
   "authors": [
-    "${author}"
+    "{{ author }}"
   ],
   "contact": {
     "website": "https://www.curseforge.com/minecraft/mc-mods/chunky-pregenerator",
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/chunky-pregenerator",
-    "repo": "${github}",
-    "sources": "${github}",
-    "issues": "${github}/issues"
+    "repo": "{{ github }}",
+    "sources": "{{ github}}",
+    "issues": "{{ github }}/issues"
   },
   "license": "GPLv3",
   "icon": "assets/chunky/icon.png",
@@ -36,7 +36,7 @@
     "fabric": "*",
     "minecraft": ">=1.21.4",
     "java": ">=21",
-    "chunky": ">=${target}"
+    "chunky": ">={{ target }}"
   },
   "custom": {
     "modmenu": {

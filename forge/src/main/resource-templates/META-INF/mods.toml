@@ -1,31 +1,31 @@
 modLoader="javafml"
-loaderVersion="[3,)"
+loaderVersion="[38,)"
 license="GNU GPLv3"
-issueTrackerURL="${github}/issues"
+issueTrackerURL="{{ github }}/issues"
 [[mods]]
-modId="${id}"
-version="${version}"
-displayName="${name}"
-displayURL="${github}"
+modId="{{ id }}"
+version="{{ version }}"
+displayName="{{ name }}"
+displayURL="{{ github}}"
 logoFile="icon.png"
-authors="${author}"
-description="${description}"
+authors="{{ author }}"
+description="{{ description }}"
 [[dependencies.chunkyborder]]
-   modId="neoforge"
-   type="required"
-   versionRange="[21.4.0-beta,)"
+   modId="forge"
+   mandatory=true
+   versionRange="[54,)"
    ordering="NONE"
    side="BOTH"
 [[dependencies.chunkyborder]]
    modId="minecraft"
-   type="required"
+   mandatory=true
    versionRange="[1.21.4,1.22)"
    ordering="NONE"
    side="BOTH"
 [[dependencies.chunkyborder]]
   modId="chunky"
-  type="required"
-  versionRange="[${target},)"
+  mandatory=true
+  versionRange="[{{ target }},)"
   ordering="BEFORE"
   side="BOTH"
 [[mixins]]
