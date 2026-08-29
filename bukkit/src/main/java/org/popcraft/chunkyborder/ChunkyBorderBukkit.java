@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
@@ -67,6 +68,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             .valueOf(Particle.class, "REDSTONE") // 1.20.4 and prior
             .orElseGet(() -> Particle.DUST); // 1.20.5 and above
     private ChunkyBorder chunkyBorder;
+    private BorderCheckTask borderCheckTask;
 
     @Override
     public void onEnable() {
@@ -98,10 +100,9 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             getServer().getScheduler().scheduleSyncDelayedTask(this, borderInitTask);
         }
         final long checkInterval = chunkyBorder.getConfig().checkInterval();
-        final Runnable borderCheckTask = new BorderCheckTask(chunkyBorder);
-        if (Folia.isFolia()) {
-            Folia.scheduleFixedGlobal(this, borderCheckTask, checkInterval, checkInterval);
-        } else {
+        this.borderCheckTask = new BorderCheckTask(chunkyBorder);
+        // Border check task is started per-player in the join event on Folia
+        if (!Folia.isFolia()) {
             getServer().getScheduler().scheduleSyncRepeatingTask(this, borderCheckTask, checkInterval, checkInterval);
         }
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
@@ -219,6 +220,17 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         }
         getServer().getServicesManager().unregisterAll(this);
         chunkyBorder.disable();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerJoin(final PlayerJoinEvent event) {
+        if (!Folia.isFolia()) {
+            return;
+        }
+
+        final long borderCheckInterval = chunkyBorder.getConfig().checkInterval();
+        final Player player = new BukkitPlayer(event.getPlayer());
+        Folia.scheduleFixed(this, event.getPlayer(), () -> borderCheckTask.check(player), borderCheckInterval, borderCheckInterval);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

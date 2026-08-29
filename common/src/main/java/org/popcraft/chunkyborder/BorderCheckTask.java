@@ -1,7 +1,6 @@
 package org.popcraft.chunkyborder;
 
 import org.popcraft.chunky.platform.Player;
-import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.platform.util.Vector3;
@@ -26,50 +25,54 @@ public class BorderCheckTask implements Runnable {
     @Override
     public void run() {
         for (final Player player : chunkyBorder.getChunky().getServer().getPlayers()) {
-            final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
-            chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
-                final Location location = player.getLocation();
-                if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
-                    playerData.setLastLocation(location);
-                } else if (!playerData.isBypassing() && !player.hasPermission("chunkyborder.bypass.move")) {
-                    final CompletableFuture<Location> redirectFuture;
-                    final BorderWrapType borderWrapType = borderData.getWrapType();
-                    if (!BorderWrapType.NONE.equals(borderWrapType)) {
-                        redirectFuture = wrap(borderData, borderWrapType, player, playerData);
-                        redirectFuture.thenAccept(redirect -> {
-                            playerData.setLastLocation(redirect);
-                            chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
-                        });
-                    } else {
-                        final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
-                        lastLocation.setYaw(location.getYaw());
-                        lastLocation.setPitch(location.getPitch());
-                        redirectFuture = CompletableFuture.completedFuture(lastLocation);
-                    }
-
-                    redirectFuture.thenAccept(redirect -> {
-                        if (chunkyBorder.getConfig().hasEffect()) {
-                            location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
-                        }
-                        if (chunkyBorder.getConfig().hasSound()) {
-                            location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
-                        }
-                        player.teleport(redirect);
-                        if (chunkyBorder.getConfig().hasMessage()) {
-                            if (chunkyBorder.getConfig().useActionBar()) {
-                                player.sendActionBar("custom_border_message");
-                            } else {
-                                player.sendMessage("custom_border_message");
-                            }
-                        }
-                    }).whenComplete(((unused, throwable) -> {
-                        if (throwable != null) {
-                            chunkyBorder.getLogger().warn("An exception occurred while redirecting {}", player.getName(), throwable);
-                        }
-                    }));
-                }
-            });
+            check(player);
         }
+    }
+
+    public void check(final Player player) {
+        final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
+        chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
+            final Location location = player.getLocation();
+            if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
+                playerData.setLastLocation(location);
+            } else if (!playerData.isBypassing() && !player.hasPermission("chunkyborder.bypass.move")) {
+                final CompletableFuture<Location> redirectFuture;
+                final BorderWrapType borderWrapType = borderData.getWrapType();
+                if (!BorderWrapType.NONE.equals(borderWrapType)) {
+                    redirectFuture = wrap(borderData, borderWrapType, player, playerData);
+                    redirectFuture.thenAccept(redirect -> {
+                        playerData.setLastLocation(redirect);
+                        chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
+                    });
+                } else {
+                    final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
+                    lastLocation.setYaw(location.getYaw());
+                    lastLocation.setPitch(location.getPitch());
+                    redirectFuture = CompletableFuture.completedFuture(lastLocation);
+                }
+
+                redirectFuture.thenAccept(redirect -> {
+                    if (chunkyBorder.getConfig().hasEffect()) {
+                        location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
+                    }
+                    if (chunkyBorder.getConfig().hasSound()) {
+                        location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
+                    }
+                    player.teleport(redirect);
+                    if (chunkyBorder.getConfig().hasMessage()) {
+                        if (chunkyBorder.getConfig().useActionBar()) {
+                            player.sendActionBar("custom_border_message");
+                        } else {
+                            player.sendMessage("custom_border_message");
+                        }
+                    }
+                }).whenComplete(((unused, throwable) -> {
+                    if (throwable != null) {
+                        chunkyBorder.getLogger().warn("An exception occurred while redirecting {}", player.getName(), throwable);
+                    }
+                }));
+            }
+        });
     }
 
     private CompletableFuture<Location> wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player, final PlayerData playerData) {
@@ -85,7 +88,7 @@ public class BorderCheckTask implements Runnable {
             case EARTH -> rectangle && wrapEarth(borderData, location);
         };
         if (wrapped) {
-            return this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ()).thenApply(elevation -> {
+            return location.getWorld().getElevationAtAsync((int) location.getX(), (int) location.getZ()).thenApply(elevation -> {
                 if (elevation >= location.getWorld().getMaxElevation()) {
                     return location.getWorld().getSpawn();
                 }
@@ -192,29 +195,5 @@ public class BorderCheckTask implements Runnable {
             location.setYaw(180);
         }
         return true;
-    }
-
-    // FIXME: replace when chunky dependency is bumped
-    private static final java.lang.invoke.MethodHandle GET_ELEVATION_AT_ASYNC;
-
-    static {
-        java.lang.invoke.MethodHandle temp;
-
-        try {
-            temp = java.lang.invoke.MethodHandles.publicLookup().unreflect(World.class.getMethod("getElevationAtAsync", int.class, int.class));
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-
-        GET_ELEVATION_AT_ASYNC = temp;
-    }
-
-    @SuppressWarnings("unchecked")
-    private CompletableFuture<Integer> getElevationAtAsync(final World world, final int x, final int z) {
-        try {
-            return (CompletableFuture<Integer>) GET_ELEVATION_AT_ASYNC.invokeExact(world, x, z);
-        } catch (Throwable e) {
-            return CompletableFuture.failedFuture(e);
-        }
     }
 }
