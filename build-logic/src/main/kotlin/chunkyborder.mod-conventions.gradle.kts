@@ -12,10 +12,10 @@ sourceSets.main {
 
             property("id", rootProject.name)
             property("version", project.version.toString())
-            property("name", providers.gradleProperty("artifactName").get())
-            property("description", providers.gradleProperty("description").get())
-            property("author", providers.gradleProperty("author").get())
-            property("github", providers.gradleProperty("github").get())
+            property("name", providers.gradleProperty("artifactName"))
+            property("description", providers.gradleProperty("description"))
+            property("author", providers.gradleProperty("author"))
+            property("github", providers.gradleProperty("github"))
             property("target", conventions.target)
         }
     }
