@@ -83,7 +83,10 @@ subprojects {
 }
 
 fun commitsSinceLastTag(): Provider<String> {
-    return providers.exec { commandLine("git", "describe", "--tags") }.standardOutput.asText.map {
+    return providers.exec {
+        commandLine("git", "describe", "--tags")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.map {
         if (it.indexOf('-') < 0) {
             return@map "0"
         }
