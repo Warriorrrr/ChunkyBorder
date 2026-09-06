@@ -1,5 +1,5 @@
 [versions]
-chunky = "1.5.3"
+chunky = "1.4.48"
 modded = "1.4.10"
 
 [libraries]
